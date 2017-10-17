@@ -39,7 +39,7 @@ object Option {
     a.flatMap((a) => b.map((b) => f(a,b)))
   }
 
-  def sequence[A](a: List[Option[A]): Option[List[A]] = a match {
+  def sequence[A](a: List[Option[A]]): Option[List[A]] = a match {
     case Nil => Some(Nil)
     case h :: t  => h.flatMap(hh => sequence(t).map(hh :: _))
   }
