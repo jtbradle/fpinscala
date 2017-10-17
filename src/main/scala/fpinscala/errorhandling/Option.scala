@@ -44,6 +44,13 @@ object Option {
     case h :: t  => h.flatMap(hh => sequence(t).map(hh :: _))
   }
 
+  def sequenceViaTraverse[A](a: List[Option[A]]): Option[List[A]] =
+    traverse(a)(x => x)
+
+  def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = a match {
+    case Nil => Some(Nil)
+    case h :: t => f(h).flatMap(hh => traverse(t)(f).map(hh :: _))
+  }
 }
 
 object Test {
