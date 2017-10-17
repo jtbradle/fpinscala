@@ -29,3 +29,29 @@ sealed trait Option[+A] {
 case class Some[+A](get: A) extends Option[A]
 case object None extends Option[Nothing]
 
+object Option {
+
+  def Try[A](a: => A): Option[A] =
+    try Some(a)
+    catch {case Exception => None}
+
+  def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = {
+    a.flatMap((a) => b.map((b) => f(a,b)))
+  }
+}
+
+object Test {
+
+  def mean(xs: Seq[Double]): Option[Double] =
+    if(xs.isEmpty) None
+    else Some(xs.foldLeft(0.0)(_ + _) / xs.size)
+
+  def variance(xs: Seq[Double]): Option[Double] =
+    mean(xs).flatMap((m) => mean(xs.map((x) => math.pow(x - m, 2))))
+
+  def main(args: Array[String]): Unit = {
+    val finalVal = null
+    println("Answer is: " + finalVal)
+  }
+}
+
