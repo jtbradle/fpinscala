@@ -4,10 +4,6 @@ import fpinscala.errorhandling._
 import Stream._
 
 sealed trait Stream[+A] {
-  def headOption: Option[A] = this match {
-    case Empty => None
-    case Cons(h, _) => Some(h())
-  }
 
   def toList: List[A] = this match {
     case Empty => Nil
@@ -26,8 +22,8 @@ sealed trait Stream[+A] {
     case _ if n == 0 => this
   }
 
-  def takeWhile(p: A => Boolean): Stream[A] = this match {
-    case Cons(h, t) if p(h) => cons(h(), t().takeWhile(p))
+  def takeWhile(f: A => Boolean): Stream[A] = this match {
+    case Cons(h,t) if f(h()) => cons(h(), t() takeWhile f)
     case _ => empty
   }
 
@@ -41,6 +37,21 @@ sealed trait Stream[+A] {
 
   def forAll(p: A => Boolean): Boolean =
     foldRight(true)((a, b) => p(a) && b)
+
+  def headOption: Option[A] =
+    foldRight(None: Option[A])((h, _) => Some(h))
+
+  def map[B](f: A => B): Stream[B] =
+    foldRight(empty: Stream[B])((h, t) => cons(f(h), t))
+
+  def filter(f: A => Boolean): Stream[A] =
+    foldRight(empty: Stream[A])((h, t) => if(f(h)) cons(h, t) else t)
+
+  def append[B>:A](n: => Stream[B]): Stream[B] =
+    foldRight(n)((h, t) => cons(h, t))
+
+  def flatMap[B](f: A => Stream[B]): Stream[B] =
+    foldRight(empty: Stream[B])((h, t) => f(h).append(t))
 }
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
@@ -56,4 +67,13 @@ object Stream {
 
   def apply[A](as: A*): Stream[A] =
     if(as.isEmpty) empty else cons(as.head, apply(as.tail: _*))
+
+  def constant[A](a: A): Stream[A] = {
+    lazy val tail: Stream[A] = Cons(() => a, () => tail)
+    tail
+  }
+
+  def from(n: Int): Stream[Int] = {
+    cons(n, from(n + 1))
+  }
 }

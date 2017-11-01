@@ -31,10 +31,6 @@ case object None extends Option[Nothing]
 
 object Option {
 
-  def Try[A](a: => A): Option[A] =
-    try Some(a)
-    catch {case Exception => None}
-
   def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = {
     a.flatMap((a) => b.map((b) => f(a,b)))
   }
