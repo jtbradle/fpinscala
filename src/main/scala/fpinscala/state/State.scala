@@ -1,5 +1,7 @@
 package fpinscala.state
 
+import scala.annotation.tailrec
+
 
 trait RNG {
   def nextInt: (Int, RNG) // Should generate a random `Int`. We'll later define other functions in terms of `nextInt`.
@@ -40,6 +42,9 @@ object RNG {
     (i / (Int.MaxValue.toDouble + 1), r)
   }
 
+  def doubleViaMap: Rand[Double] =
+    map(nonNegativeInt)(i => i / (Int.MaxValue.toDouble + 1))
+
   def intDouble(rng: RNG): ((Int,Double), RNG) = {
     val (i, r) = rng.nextInt
     val (d, r1) = double(r)
@@ -60,7 +65,7 @@ object RNG {
   }
 
   def ints(count: Int)(rng: RNG): (List[Int], RNG) = {
-    @annotation.tailrec
+    @tailrec
     def go(l: List[Int], r: RNG, count: Int): (List[Int], RNG) =
       if(count > 0) {
         val (i1, r1) = r.nextInt
@@ -72,9 +77,22 @@ object RNG {
     go(Nil, rng, count)
   }
 
-  def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = ???
+  def intsViaSequence(count: Int)(rng: RNG): Rand[List[Int]] = {
+    val x: List[Rand[Int]] = List.fill(count)(int)
+    sequence(x)
+  }
 
-  def sequence[A](fs: List[Rand[A]]): Rand[List[A]] = ???
+  def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = {
+    rng => {
+      val (a, rng1) = ra(rng)
+      val (b, rng2) = rb(rng1)
+      (f(a, b), rng2)
+    }
+  }
+
+  def sequence[A](fs: List[Rand[A]]): Rand[List[A]] = {
+    fs.foldRight(unit(List[A]()))((randA, randList) => map2(randA, randList)(_ :: _))
+  }
 
   def flatMap[A,B](f: Rand[A])(g: A => Rand[B]): Rand[B] = ???
 }
